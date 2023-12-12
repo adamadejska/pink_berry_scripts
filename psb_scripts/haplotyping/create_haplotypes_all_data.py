@@ -77,7 +77,7 @@ def calculate_haplotype_probability(snp_matrix):
     It counts the number of each allele and divides it by all the alleles.
     The haplotypes are: green, yellow, WT, missing.
     """
-    haplotype_counts = [0, 0, 0]  # G, Y, W, M
+    haplotype_counts = [0, 0, 0]  # G, W, M
     strains = snp_matrix.index.tolist()
 
     for s in strains:
@@ -392,6 +392,40 @@ def get_haplotype_lengths(haplotype, positions):
     return(green_lengths)
 
 
+def get_wt_haplotype_regions(haplotype, positions):
+    """
+    Given a list of consecutive SNP matrix positions and the haplotype we figured out each position belongs to,
+    figure out which regions are wild type. 
+    """
+
+    wt_regions = []
+
+    # Green haplotype
+    haplotype += [0]
+    wt_hap_only = np.array(haplotype)==0
+    wt_hap_only = wt_hap_only.astype(int)
+
+    region = []
+    for i in range(0, len(wt_hap_only)):
+        if wt_hap_only[i] == 1:
+            region.append(i)
+
+        elif len(region) == 1:                              # do something about 'blips' in the haplotyping
+            start = str(wt_hap_only[i]).split('.')[0]       # treat them as a block of length 2 instead of 1 
+            end = str(positions[region[-1]]).split('.')[0]  # (so we don't end up with zeros)
+            #wt_regions.append((start, end))
+            region = []
+
+        elif len(region) > 1:
+            start = str(positions[region[0]]).split('.')[0]
+            end = str(positions[region[-1]]).split('.')[0]
+            #print(start, end)
+            wt_regions.append((start, end))
+            region = []
+
+    return(wt_regions)
+
+
 if __name__ == "__main__":
 
     # Read in the SNP matrix and figure out which columns correspond to which contig.
@@ -399,7 +433,7 @@ if __name__ == "__main__":
     clade_9_strains = ['PB87','PB40','GGACTCCT-AGAGTAGA','GGACTCCT-GTAAGGAG','GGACTCCT-CTAAGCCT','TCCTGAGC-TAGATCGC','TCCTGAGC-CTCTCTAT','PB73','PB80']
     
     backwards = False
-    max_penalty = 5
+    max_penalty = 1
 
     # Read in the data matrix
     snp_matrix = pd.read_csv(snp_matrix_path, index_col=0)
@@ -425,17 +459,13 @@ if __name__ == "__main__":
     for strain in strains:
         if strain not in clade_9_strains:
             per_strain_blocks_green[strain] = []
-            for i in range(0, len(columns), 500):
-                #print(strain + ' ' + str(i))
-                print('# ' + strain + ' ' + str(i) + ' penalty: 10, L:5')
-                start, end = i, i+500 if i+500 < len(columns) else len(columns)-1
-                haplotype = run_haplotyping(start, end, 3, strain, snp_matrix, max_penalty, profiles)
-                print(haplotype)
-                green_lengths = get_haplotype_lengths(haplotype,columns[start:end])
-
-                all_green_lengths += green_lengths
-
-                per_strain_blocks_green[strain] += green_lengths
+            #print(strain + ' ' + str(i))
+            print('# ' + strain + ' penalty: 1, L:5')
+            start, end = 0, len(columns)-1
+            haplotype = run_haplotyping(start, end, 3, strain, snp_matrix, max_penalty, profiles)
+            #print(haplotype)
+            wt_regions = get_wt_haplotype_regions(haplotype,columns[start:end])
+            print(wt_regions)
 
     #print(all_green_lengths)
     #print(per_strain_blocks_green)
