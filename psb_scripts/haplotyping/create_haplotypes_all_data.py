@@ -431,7 +431,8 @@ if __name__ == "__main__":
     # Read in the SNP matrix and figure out which columns correspond to which contig.
     snp_matrix_path = '/home/ada/Desktop/Shraiman_lab/9_clade_analysis/haplotyping/fixed_9_clade_snp_matrix.csv'
     clade_9_strains = ['PB87','PB40','GGACTCCT-AGAGTAGA','GGACTCCT-GTAAGGAG','GGACTCCT-CTAAGCCT','TCCTGAGC-TAGATCGC','TCCTGAGC-CTCTCTAT','PB73','PB80']
-    
+    psb_tree_no_9_clade = ['AAGAGGCA-TATCCTCT','PB63','AAGAGGCA-TAGATCGC','PB39','PB_8','GCTACGCT-GTAAGGAG','PB24','PB55','AAGAGGCA-GTAAGGAG','AAGAGGCA-AAGGAGTA','GCTACGCT-ACTGCATA','PB31','AAGAGGCA-CTAAGCCT','AAGAGGCA-CTCTCTAT','PB32','PB16','PB47','PB48','PB64','AGGCAGAA-ACTGCATA','AGGCAGAA-CTAAGCCT','TAAGGCGA-TATCCTCT','PB78','PB61','GGACTCCT-ACTGCATA','GGACTCCT-TAGATCGC','PB45','PB77','PB69','PB_5','PB37','PB13','PB85','PB28','PB67','PB59','PB52','PB26','PB34','PB11','CTCTCTAC-AAGGAGTA','GTAGAGGA-CTAAGCCT','CTCTCTAC-CTAAGCCT','CTCTCTAC-CTCTCTAT','CTCTCTAC-TAGATCGC','CTCTCTAC-ACTGCATA','CAGAGAGG-TAGATCGC','CAGAGAGG-CTAAGCCT','CAGAGAGG-GTAAGGAG','CTCTCTAC-TATCCTCT','CAGAGAGG-ACTGCATA','CAGAGAGG-AGAGTAGA','CAGAGAGG-TATCCTCT','CAGAGAGG-AAGGAGTA','CTCTCTAC-AGAGTAGA','CTCTCTAC-GTAAGGAG','PB44','PB36','PB58','PB82','PB20','PB60','PB51','PB_2','PB25','PB41','CGTACTAG-TAGATCGC','PB57','PB43','PB12','PB66','PB90','PB21','GTAGAGGA-CTCTCTAT','PB75']
+   
     backwards = False
     max_penalty = 1
 
@@ -457,7 +458,7 @@ if __name__ == "__main__":
     per_strain_blocks_green = {}
 
     for strain in strains:
-        if strain not in clade_9_strains:
+        if strain in psb_tree_no_9_clade:
             per_strain_blocks_green[strain] = []
             #print(strain + ' ' + str(i))
             print('# ' + strain + ' penalty: 1, L:5')
