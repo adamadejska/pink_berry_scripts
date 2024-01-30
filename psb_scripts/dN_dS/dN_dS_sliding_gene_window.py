@@ -1,6 +1,10 @@
 ##############################################
 # 
 # dN/dS analysis PSB
+# This script looks at a 10 gene windows and computes 
+# the dN/dS for that window. At the end, it creates a 
+# line plot showsing the changes in dN/dS based on genes
+# across the chromosome. 
 #
 ##############################################
 
@@ -8,22 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-
-def theory_dN(dS):
-	 return (asymptotic_dNdS+(1-asymptotic_dNdS)*(1-np.exp(-sbymu*dS))/(theory_ds*sbymu))*dS
-
-# Purifying selection model
-# Fitted manually
-asymptotic_dNdS = 0.12
-dStar = 3e-04
-sbymu = 1/dStar/asymptotic_dNdS
-print("s/u =", sbymu)
-print("s =", sbymu*1e-09)
-theory_ds = np.logspace(-6,-1,100)
-
-
-#theory_dNdSs = asymptotic_dNdS+(1-asymptotic_dNdS)*(1-numpy.exp(-sbymu*theory_ds))/(theory_ds*sbymu)
-theory_dNdSs = theory_dN(theory_ds)/theory_ds
 
 # Read the data.
 data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/data/snp_data_2020.csv', index_col=0)
@@ -39,6 +27,7 @@ coding_reg = [False] * len(data_positions)
 print('finding all SNPs in ORFs.')
 # Using the original GFF file, figure out which positions from the SNP matrix hit ORFs.
 # Read in the annotation file.
+gene_order = []
 with open('/home/ada/Desktop/Shraiman_lab/data/psb_scaff03_noG.gff', 'r') as f:
 	for line in f:
 		# Ignore the header.
@@ -55,6 +44,7 @@ with open('/home/ada/Desktop/Shraiman_lab/data/psb_scaff03_noG.gff', 'r') as f:
 						# (the length will be dividable by 3 (length of a codon))
 						orf_regions.add((ann_start, ann_end, strand))
 						reg_to_descr[(ann_start, ann_end, strand)] = descr
+						gene_order.append((ann_start, ann_end, strand))
 						break
 
 print('Done!')
@@ -145,7 +135,7 @@ for reg,seq in sequences.items():
 	gene_to_syn_nonsyn_opportunities[reg] = [syn_count, nonsyn_count]
 			
 print('Done!')
-print('starting synonymous / nonsynonymous calculations for all possible loci')
+print('starting synonymous / nonsynonymous calculations for all possible experimental loci')
 
 good_positions = [int(i) for i in data_positions.copy()]
 positions_to_mut_type = {}
@@ -191,71 +181,75 @@ for reg,seq in sequences.items():
 					print('something went wrong')
 
 print('Done!')		
-#print([True for i in positions_to_mut_type.keys() if i in good_positions])
 
-#data_index = data_index[:30]
 #data_positions = data_positions[:40]
-print('Calculate experimental nonsynonymous and synonymous counts for each strain pair')
+print('Calculate experimental nonsynonymous and synonymous counts for each gene window')
 syn_differences = []
 nonsyn_differences = []
 all_syn_opportunities = []
 all_nonsyn_opportunities = []
-for m in range(0, len(data_index)):
-	for n in range(m+1, len(data_index)):
-		print(m, n)
-		strain1 = data_index[m]
-		strain2 = data_index[n]
-		strain1_snps = np.array(data.loc[strain1, :])
-		strain2_snps = np.array(data.loc[strain2, :])
-		
-		# Find differences between two strains 
-		diff_SNPs = []
-		for i in range(0, len(strain1_snps)):
-			s1_snp = strain1_snps[i]
-			s2_snp = strain2_snps[i]
-			# Don't include sites where one of the positions has a NaN (we don't know what's there)
-			if not np.isnan(s1_snp) and not np.isnan(s2_snp):
-				if s1_snp != s2_snp:
-					diff_SNPs.append(i)
-		
-		good_positions = [data_positions[i] for i in diff_SNPs]
-		nonsynonymous, synonymous = 0, 0    # prepare a counter 
-		for pos in good_positions:
-			if int(pos) in positions_to_mut_type.keys():
-				if positions_to_mut_type[int(pos)] == 'N':
-					nonsynonymous += 1
-				elif positions_to_mut_type[int(pos)] == 'S':
-					synonymous += 1
+gene_positions = []    # arbitrary
+counter = 0
+genes_with_selection = []
+dn_ds_values = []
 
-		# Find all genes that positions hit and count opportunity for synonymous and nonsynonymous changes.
-		nonsyn_opportunity, syn_opportunity = 0, 0
-		found_genes = []
-		for reg,seq in sequences.items():
-			for i in range(0, len(good_positions)):
-				if int(good_positions[i]) >= int(reg[0]) and int(good_positions[i]) <= int(reg[1]):
-					if reg not in found_genes:
-						nonsyn_opportunity += gene_to_syn_nonsyn_opportunities[reg][1]   # value: [syn_count, nonsyn_count]
-						syn_opportunity += gene_to_syn_nonsyn_opportunities[reg][0]
-						found_genes.append(reg)
+for i in range(0, len(gene_order)-10):
+#for i in range(0, 600):
+	print(str(i) + ' out of: ' + str(len(gene_order)))
+	counter += 1
+	current_genes = [gene_order[j] for j in range(i, i+10)]
+	
+	# Find differences between two strains 
+	diff_SNPs = []
+	for j in range(0, len(data_positions)):
+		for gene in current_genes:
+			if int(data_positions[j]) >= gene[0] and int(data_positions[j]) <= gene[1]:
+				diff_SNPs.append(j)
 
-		syn_differences.append(synonymous)
-		nonsyn_differences.append(nonsynonymous)
-		all_syn_opportunities.append(syn_opportunity)
-		all_nonsyn_opportunities.append(nonsyn_opportunity)
+	good_positions = [data_positions[j] for j in diff_SNPs]
+	nonsynonymous, synonymous = 0, 0    # prepare a counter 
+	for pos in good_positions:
+		if int(pos) in positions_to_mut_type.keys():
+			if positions_to_mut_type[int(pos)] == 'N':
+				nonsynonymous += 1
+			elif positions_to_mut_type[int(pos)] == 'S':
+				synonymous += 1
+
+	# Find all genes that positions hit and count opportunity for synonymous and nonsynonymous changes.
+	nonsyn_opportunity, syn_opportunity = 0, 0
+	for reg in current_genes:
+		nonsyn_opportunity += gene_to_syn_nonsyn_opportunities[reg][1]   # value: [syn_count, nonsyn_count]
+		syn_opportunity += gene_to_syn_nonsyn_opportunities[reg][0]
+
+	syn_differences.append(synonymous)
+	nonsyn_differences.append(nonsynonymous)
+	all_syn_opportunities.append(syn_opportunity)
+	all_nonsyn_opportunities.append(nonsyn_opportunity)
+	gene_positions.append(counter)
+
+	relative_dn = nonsynonymous / nonsyn_opportunity
+	relative_ds =  synonymous / syn_opportunity
+	if relative_dn / relative_ds >= 1.0:
+		genes_with_selection.append(current_genes)
+		dn_ds_values.append(relative_dn / relative_ds)
+
 
 print('Done!')
 print('Create a figure')
 relative_dn = np.array(nonsyn_differences) / np.array(all_nonsyn_opportunities)
 relative_ds = np.array(syn_differences) / np.array(all_syn_opportunities)
-#experimental_dnds = np.array(nonsyn_differences) / np.array(syn_differences)
 experimental_dnds = relative_dn / relative_ds
 
-#plt.plot(theory_ds, theory_dNdSs, 'r-', label='Purifying selection model')
-plt.plot(relative_ds, [1]*len(relative_ds), '--', color='gray', alpha=0.8, label='Neutral model')
-plt.plot(relative_ds, experimental_dnds, 'o', color='0.7', markersize=2, markeredgewidth=0, label='(berry x berry)')
-plt.xscale('log')
-plt.yscale('log')
-plt.title('Ratio of divergence at nonsynonymous sites ($d_N$) as a function of $d_S$')
-plt.xlabel('Synonymous divergence, $d_S$')
-plt.ylabel('Nonsynonymous ratio, $d_N/d_S$')
-plt.show()
+print(genes_with_selection)
+print(dn_ds_values)
+
+for i in range(0, len(experimental_dnds)-500, 500):
+	tmp_experimental = experimental_dnds[i:i+500]
+	tmp_neutral = [1]*len(relative_ds)
+	tmp_neutral = tmp_neutral[i:i+500]
+	plt.plot(tmp_neutral, '--', color='gray', alpha=0.8, label='Neutral model')
+	plt.plot(tmp_experimental)
+	#plt.title('Ratio of divergence at nonsynonymous sites ($d_N$) as a function of $d_S$')
+	plt.xlabel('sliding 10-gene window')
+	plt.ylabel('Nonsynonymous ratio, $d_N/d_S$')
+	plt.show()
