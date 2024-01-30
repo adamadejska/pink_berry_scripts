@@ -41,6 +41,7 @@ for contig in contigs:
     # Plot the results
     plt.plot(bins, mean_r, label='contig ' + str(contig))
 
+plt.title('SRB r^2 measurements')
 plt.xlabel('Nucleotide Distance (bp) (bin size = 10) ')
 plt.ylabel('Mean Linkage Disequilibrium r^2 ')
 plt.legend()
@@ -80,12 +81,14 @@ for i in bins:
 #print(bins)
 # Plot the results
 plt.plot(bins, mean_r)
+plt.title('SRB r^2 measurements (contig 0)')
 plt.xlabel('Nucleotide Distance (bp)')
 plt.ylabel('Mean Linkage Disequilibrium r^2')
 plt.show()
 
 # Plot the results as log-log 
 plt.plot(bins, mean_r)
+plt.title('SRB r^2 measurements (contig 0)')
 plt.xlabel('Nucleotide Distance (bp) (log scale)')
 plt.ylabel('Mean Linkage Disequilibrium r^2 (log scale)')
 plt.yscale('log')
@@ -128,6 +131,7 @@ for contig in contigs:
     # Plot the results
     plt.plot(bins, mean_r, label='contig ' + str(contig))
 
+plt.title('SRB r^2 measurements')
 plt.xlabel('Nucleotide Distance (bp)(log)')
 plt.ylabel('Mean Linkage Disequilibrium r^2 (log)')
 plt.legend()

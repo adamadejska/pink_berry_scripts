@@ -37,6 +37,7 @@ for i in bins:
 
 # Plot the results
 plt.plot(bins, mean_r)
+plt.title('PSB r^2 measurements')
 plt.xlabel('Nucleotide Distance (bp) (bin size = 10)')
 plt.ylabel('Mean Linkage Disequilibrium r^2')
 plt.show()
@@ -72,6 +73,7 @@ for i in bins:
 #print(bins)
 # Plot the results
 plt.plot(bins, mean_r)
+plt.title('PSB r^2 measurements')
 plt.xlabel('Nucleotide Distance (bp)')
 plt.ylabel('Mean Linkage Disequilibrium r^2')
 plt.show()
