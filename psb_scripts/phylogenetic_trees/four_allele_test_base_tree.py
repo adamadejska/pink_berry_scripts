@@ -50,7 +50,8 @@ def get_allele_freq(positions, index):
 
 
 # Read in the PSB snp data
-data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/data/snp_data_2020.csv', index_col=0)
+#data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/data/snp_data_2020.csv', index_col=0)
+data = pd.read_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/psb/PSB_snp_data_coverage_6.csv', index_col=0)
 
 # Index = names of bacterial samples
 data_index = data.index.values.tolist()
