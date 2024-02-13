@@ -106,11 +106,11 @@ for i in data_positions:
 	mutations[int(i)] = ''
 
 # Check what was the mutation (minor allele) for each SNP position.
-with open('/home/ada/Desktop/Shraiman_lab/data/dsdn/minor_alleles.txt', 'r') as f:
+print(len(data_positions))
+with open('/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/dN_dS/psb_minor_alleles_coverage_3.txt', 'r') as f:
 	for line in f:
-		tmp = line.split()
-		for i in range(0, len(tmp)):
-			mutations[int(data_positions[i])] = tmp[i][1:-1]
+		pos, minor = line.split(',')
+		mutations[int(pos)] = minor.strip()
 
 print('calculate opportunities: all possible synonymous and nonsynonymous changes for each gene')
 gene_to_syn_nonsyn_opportunities = {}
