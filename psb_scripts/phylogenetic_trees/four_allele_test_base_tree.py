@@ -15,26 +15,37 @@ import pandas as pd
 import random
 
 
+def find_pairs(positions, distance):
+	"""
+	Find pairs of loci that are less than a d distance apart from each other.
+	We will use them to calculate 4 allele test values
+	"""
+	good_pairs = []
+	counter = 0
+	while counter < 20000:
+		pos1_i = random.randrange(0, len(positions))
+		pos2_i = random.randrange(0, len(positions))
+		if abs(int(positions[pos2_i]) - int(positions[pos1_i])) >= distance:
+			if pos1_i != pos2_i and (pos1_i, pos2_i) not in good_pairs and (pos2_i, pos1_i) not in good_pairs:
+				print(counter)
+				good_pairs.append((positions[pos1_i], positions[pos2_i]))
+				counter += 1
 
-def get_allele_freq(positions):
+	return(good_pairs)
+
+
+def get_allele_freq(positions, good_pairs):
 	# This function performs the 4 allele test.
 	# It determines two random loci and collects all alleles for the group
 	# at that position if neither position is an 'N'.
 	# Next, if threshold was satisfied, it checks if there's <= 3 alleles (PASS) or 4 alleles (FAIL)
 
 	test_vals = []
-	counter = 0
-	pairs_used = []
-	while counter <= 50000:
-		print(counter)
-		# Get random positions
-		pos1_i = random.randrange(0, len(positions))
-		pos2_i = random.randrange(0, len(positions))
-
-		if pos1_i != pos2_i and (pos1_i, pos2_i) not in pairs_used and (pos2_i, pos1_i) not in pairs_used:
-			pos1 = list(data.iloc[:, pos1_i])
-			pos2 = list(data.iloc[:, pos2_i])
-			allele = set()
+	for pair in good_pairs:
+		if pair[0] in positions and pair[1] in positions:
+		 
+			pos1 = list(data.loc[:, pair[0]])
+			pos2 = list(data.loc[:, pair[1]])
 
 			list_zip = list(zip(pos1, pos2))
 			clean_list = []
@@ -44,8 +55,6 @@ def get_allele_freq(positions):
 			
 			if len(clean_list) > 10:
 				test_vals.append(len(set(clean_list)))
-				counter += 1
-				pairs_used.append((pos1_i, pos2_i))
 
 	return(test_vals)
 
@@ -107,8 +116,8 @@ def find_common_WT_positions(n):
 	return(common_positions)
 
 # Read in the PSB snp data
-#data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/data/snp_data_2020.csv', index_col=0)
-data = pd.read_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/psb/PSB_snp_data_coverage_6.csv', index_col=0)
+data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/data/snp_data_2020.csv', index_col=0)
+#data = pd.read_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/psb/PSB_snp_data_coverage_6.csv', index_col=0)
 
 # Index = names of bacterial samples
 data_index = data.index.values.tolist()
@@ -155,10 +164,11 @@ for p in data_positions:
         positions_15.append(p)
 
 
-test_vals_og = get_allele_freq(data_positions)
-test_vals_base_10 = get_allele_freq(positions_10)
-test_vals_base_5 = get_allele_freq(positions_5)
-test_vals_base_15 = get_allele_freq(positions_15)
+good_pairs = find_pairs(data_positions, 400)
+test_vals_og = get_allele_freq(data_positions, good_pairs)
+test_vals_base_10 = get_allele_freq(positions_10, good_pairs)
+test_vals_base_5 = get_allele_freq(positions_5, good_pairs)
+test_vals_base_15 = get_allele_freq(positions_15, good_pairs)
 #test_vals_base_hap_5 = get_allele_freq(find_common_WT_positions(5))
 #test_vals_base_hap_strict = get_allele_freq(find_common_WT_positions(0))
 
@@ -177,10 +187,18 @@ ind = np.arange(N)
 width = 0.1
 
 def order_values(dict):
+
 	ordered_vals = []
+
+	# Also normalize the values
+	total = 0
 	for i in range(1, 5):
 		ordered_vals.append(dict[i])
-	return(ordered_vals)
+		total += dict[i]
+
+	normalized_vals = list(np.array(ordered_vals)/total)
+
+	return(normalized_vals)
 
 plt.bar(ind, order_values(allele_vals_dict_og), width, label='full data')
 plt.bar(ind+width, order_values(allele_vals_dict_base_5), width, label='frequency <= 5 SNPs / 1kb')
@@ -189,10 +207,10 @@ plt.bar(ind+width*3, order_values(allele_vals_dict_base_15), width, label='frequ
 #plt.bar(ind+width*4, order_values(allele_vals_dict_base_hap_5), width, label='WT regions based on haplotyping (90%)')
 #plt.bar(ind+width*5, order_values(allele_vals_dict_base_hap_strict), width, label='WT regions based on haplotyping (strict)')
 
-plt.title('4 allele test values for PSB loci (coverage >= 6) (n=50,000)')
+plt.title('4 allele test values for PSB loci (coverage >= 3) (n=20,000)\n distance between loci >= 400 bp')
 plt.xlabel('4 allele test values')
-plt.ylabel('number of pairs')
-plt.yscale('log')
+plt.ylabel('fraction of pairs (normalized)')
+#plt.yscale('log')
 plt.xticks(ind+width*2,[1, 2, 3, 4])
 plt.legend()
 plt.show()
