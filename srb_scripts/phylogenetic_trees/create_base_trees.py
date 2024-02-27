@@ -11,10 +11,11 @@ import numpy as np
 import pandas as pd
 
 # Read in the PSB snp data
-data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2021.csv', index_col=0)
+#data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2021.csv', index_col=0)
+data = pd.read_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SNP_data/srb_snp_data_2024_chr_coverage_6_no_PB93.csv', index_col=0)
 
 # Delete PB93 because it's a hyper mutator
-data = data.drop('PB93')
+#data = data.drop('PB93')
 
 # Index = names of bacterial samples
 data_index = data.index.values.tolist()
@@ -41,7 +42,7 @@ windows = np.array(windows) / window
 
 low_density_regions = []
 for window, density in densities.items():
-    if density <= 20:
+    if density <= 5:
         low_density_regions.append(window)
 
 print('finding low density loci')
@@ -53,6 +54,7 @@ for p in data_positions:
     if int_div in low_density_regions:
         positions.append(p)
 
+print(len(positions))
 print('creating matrix')
 ####
 # Create a distance matrix to be used in MATlab to create a tree
@@ -130,8 +132,8 @@ for i in range(0, len(index)):
 # to create trees.
 
 matlab_data = [str(i) for i in matlab_data]
-out1 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SRB_names_baseline.csv','w')
-out2 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SRB_values_baseline.csv', 'w')
+out1 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SRB_names_baseline_5_cov_6.csv','w')
+out2 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SRB_values_baseline_5_cov_6.csv', 'w')
 out1.write(','.join(index))
 out2.write(','.join(matlab_data))
 out1.close()

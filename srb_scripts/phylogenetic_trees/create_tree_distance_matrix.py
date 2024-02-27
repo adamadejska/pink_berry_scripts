@@ -12,15 +12,17 @@ import re
 
 
 # Read in the SNP data
-data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2021.csv', index_col=0)
+#data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2021.csv', index_col=0)
+#data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2023_chr_coverage_6.csv', index_col=0)
+data = pd.read_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SNP_data/srb_snp_data_2024_chr_coverage_6_no_PB93.csv', index_col=0)
 
-data_index = data.index.values.tolist()  # names of bacterial samples
+data_index = data.index.values.tolist()[1:]  # names of bacterial samples, get rid of the chr row
 data_positions = data.columns.tolist()
 
 # Only consider positions that are not singletons or doubletons.
 positions = []
 for i in data_positions:
-	n = sum(np.array(data[i])==1)
+	n = sum(np.array(data[i][1:])==1)
 	if n > 2:
 		positions.append(i)
 
@@ -49,7 +51,7 @@ for strain in data_index:
 	#name = strain + '_' + str(ns_num)
 
 	#print(strain + ' ' + str(ns_num/len(strain_positions)))
-	if ns_num/len(strain_positions) <= 0.3:   # Get rid of strains with a lot of missing data
+	if ns_num/len(strain_positions) <= 0.6:   # Get rid of strains with a lot of missing data
 		#strain_data[name] = strain_positions
 		strain_data[strain] = strain_positions
 
@@ -79,8 +81,8 @@ for i in range(0, len(index)):
 # Save the names and values to two csv files that will be inported to matlab
 # to create trees.
 matlab_data = [str(i) for i in matlab_data]
-out1 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SRB_names_no1s_2023.csv','w')
-out2 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SRB_values_no1s_2023.csv', 'w')
+out1 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/tree_matrixes/SRB_names_no1s_2024_coverage_6_called_no2s_60_NaNs.csv','w')
+out2 = open('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/tree_matrixes/SRB_values_no1s_2024_coverage_6_called_no2s_60_NaNs.csv', 'w')
 out1.write(','.join(index))
 out2.write(','.join(matlab_data))
 out1.close()
