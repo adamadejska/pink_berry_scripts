@@ -13,7 +13,7 @@ import pandas as pd
 np.set_printoptions(threshold=sys.maxsize)
 
 # Read in the original BCF file.
-bcf_in = VariantFile("psb-scaff03.minimap2-freebayes.bcf")  # auto-detect input format
+bcf_in = VariantFile('/home/ada/Desktop/Shraiman_lab/data/psb-scaff03.minimap2-freebayes.bcf')  # auto-detect input format
 bcf_iter = bcf_in.fetch()
 all_samples = list(bcf_in.header.samples)
 
@@ -37,7 +37,7 @@ for pos in bcf_iter:
     # gather coverage as alleles, mark non-calls, complex alleles and coverage <=3 as 'N'
     tmp_coverage = [-1 if pos.samples[s]['DP'] is None else pos.samples[s]['DP'] for s in good_samples]
     # Get a major allele for each bacteria
-    tmp_alleles = ['N' if pos.samples[s].alleles[0] is None or len(pos.samples[s].alleles[0])>1 or tmp_coverage[si]<3
+    tmp_alleles = ['N' if pos.samples[s].alleles[0] is None or len(pos.samples[s].alleles[0])>1 or tmp_coverage[si]<=6
                    else pos.samples[s].alleles[0] for si,s in enumerate(good_samples)]
     tmp_meta = [[tmp_coverage[si], pos.samples[s]['RO'], pos.samples[s]['AO']] for si, s in enumerate(good_samples)]
 
@@ -84,5 +84,5 @@ mdf = mdf.T
 
 
 # Save the matrices to CSV
-df.to_csv('snp_data_2020.csv')
-mdf.to_csv('snp_meta_data_2020.csv')
+df.to_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/psb/PSB_snp_data_coverage_6.csv')
+mdf.to_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/psb/PSB_snp_meta_data_coverage_6.csv')
