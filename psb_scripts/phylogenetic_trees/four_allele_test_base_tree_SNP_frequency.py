@@ -19,22 +19,24 @@ def find_pairs(positions, distance, frequency, data):
 	"""
 	Find pairs of loci that are less than a d distance apart from each other.
 	We will use them to calculate 4 allele test values
+	Use only those loci that have a higher frequency of mutations (we don't want singletons for example)
 	"""
+	good_positions = []
+	for i in positions:
+		pos = np.array(data.loc[:, i])
+		if sum(pos == 1) >= frequency:
+			good_positions.append(i)
+
 	good_pairs = []
 	counter = 0
-	while counter < 20000:
-		pos1_i = random.randrange(0, len(positions))
-		pos2_i = random.randrange(0, len(positions))
-		pos1 = np.array(data.iloc[:, pos1_i])
-		pos2 = np.array(data.iloc[:, pos2_i])
-		pos1_freq = sum(pos1 == 1)
-		pos2_freq = sum(pos2 == 1)
-		if abs(int(positions[pos2_i]) - int(positions[pos1_i])) <= distance:
-			if pos1_freq >= frequency and pos2_freq >= frequency:
-				if pos1_i != pos2_i and (pos1_i, pos2_i) not in good_pairs and (pos2_i, pos1_i) not in good_pairs:
-					print(counter)
-					good_pairs.append((positions[pos1_i], positions[pos2_i]))
-					counter += 1
+	while counter <= 5000:
+		i = random.choice(good_positions)
+		j = random.choice(good_positions)
+		if abs(int(j) - int(i)) <= distance:
+			if i != j and (i, j) not in good_pairs and (j, i) not in good_pairs:
+				print(counter)
+				good_pairs.append((i, j))
+				counter += 1
 
 	return(good_pairs)
 
@@ -64,7 +66,7 @@ def get_allele_freq(positions, good_pairs):
 
 
 def find_common_WT_positions(n):
-     # Read in the wt haplotype file
+	 # Read in the wt haplotype file
 	wt_hap_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/haplotyping/haplotypes_full_data.txt'
 
 	print('start')
@@ -132,12 +134,12 @@ window = 1000
 densities = {}
 windows = []
 for p in data_positions:
-    int_div = int(p) // window
-    if int_div not in densities.keys():
-        densities[int_div] = 1
-        windows.append(int_div)
-    else:
-        densities[int_div] += 1
+	int_div = int(p) // window
+	if int_div not in densities.keys():
+		densities[int_div] = 1
+		windows.append(int_div)
+	else:
+		densities[int_div] += 1
 
 # Plot the densities across the genome
 windows = np.array(windows) / window
@@ -149,42 +151,39 @@ low_density_regions_10 = []
 low_density_regions_5 = []
 low_density_regions_15 = []
 for window, density in densities.items():
-    if density <= 10:
-        low_density_regions_10.append(window)
-    if density <= 5:
-        low_density_regions_5.append(window)
-    if density <= 15:
-        low_density_regions_15.append(window)
+	if density <= 10:
+		low_density_regions_10.append(window)
+	if density <= 5:
+		low_density_regions_5.append(window)
+	if density <= 15:
+		low_density_regions_15.append(window)
 
 # Find the loci that are in the low density regions. We will use them for distance matrix construction.
 positions_10, positions_5, positions_15 = [], [], []
 for p in data_positions:
-    int_div = int(p) // window
-    if int_div in low_density_regions_10:
-        positions_10.append(p)
-    if int_div in low_density_regions_5:
-        positions_5.append(p)
-    if int_div in low_density_regions_15:
-        positions_15.append(p)
+	int_div = int(p) // window
+	if int_div in low_density_regions_10:
+		positions_10.append(p)
+	if int_div in low_density_regions_5:
+		positions_5.append(p)
+	if int_div in low_density_regions_15:
+		positions_15.append(p)
 
-frequency = 5
-good_pairs = find_pairs(data_positions, 50000, frequency, data)
-test_vals_og = get_allele_freq(data_positions, good_pairs)
-test_vals_base_10 = get_allele_freq(positions_10, good_pairs)
-test_vals_base_5 = get_allele_freq(positions_5, good_pairs)
-test_vals_base_15 = get_allele_freq(positions_15, good_pairs)
-#test_vals_base_hap_5 = get_allele_freq(find_common_WT_positions(5))
-#test_vals_base_hap_strict = get_allele_freq(find_common_WT_positions(0))
+frequency = 1
+good_pairs_200 = find_pairs(data_positions, 200, frequency, data)
+good_pairs_400 = find_pairs(data_positions, 400, frequency, data)
+good_pairs_50000 = find_pairs(data_positions, 50000, frequency, data)
+
+test_vals_400 = get_allele_freq(data_positions, good_pairs_400)
+test_vals_200 = get_allele_freq(data_positions, good_pairs_200)
+test_vals_50000 = get_allele_freq(data_positions, good_pairs_50000)
 
 
 print('Finished compiling distances')
 print('Start making histogram data')
-allele_vals_dict_og = Counter(test_vals_og)
-#allele_vals_dict_base_hap_5 = Counter(test_vals_base_hap_5)
-#allele_vals_dict_base_hap_strict = Counter(test_vals_base_hap_strict)
-allele_vals_dict_base_10 = Counter(test_vals_base_10)
-allele_vals_dict_base_5 = Counter(test_vals_base_5)
-allele_vals_dict_base_15 = Counter(test_vals_base_15)
+allele_vals_dict_400 = Counter(test_vals_400)
+allele_vals_dict_200 = Counter(test_vals_200)
+allele_vals_dict_50000 = Counter(test_vals_50000)
 
 N = 4
 ind = np.arange(N)  
@@ -204,14 +203,11 @@ def order_values(dict):
 
 	return(normalized_vals)
 
-plt.bar(ind, order_values(allele_vals_dict_og), width, label='full data')
-plt.bar(ind+width, order_values(allele_vals_dict_base_5), width, label='density <= 5 SNPs / 1kb')
-plt.bar(ind+width*2, order_values(allele_vals_dict_base_10), width, label='density <= 10 SNPs / 1kb')
-plt.bar(ind+width*3, order_values(allele_vals_dict_base_15), width, label='density <= 15 SNPs / 1kb')
-#plt.bar(ind+width*4, order_values(allele_vals_dict_base_hap_5), width, label='WT regions based on haplotyping (90%)')
-#plt.bar(ind+width*5, order_values(allele_vals_dict_base_hap_strict), width, label='WT regions based on haplotyping (strict)')
+plt.bar(ind, order_values(allele_vals_dict_50000), width, label='distance between loci <= 50,000 bp')
+plt.bar(ind+width, order_values(allele_vals_dict_400), width, label='distance between loci <= 400 bp')
+plt.bar(ind+width*2, order_values(allele_vals_dict_200), width, label='distance between loci <= 200 bp')
 
-plt.title('4 allele test values for PSB loci (coverage >= 3) (n=20,000)\n distance between loci <= 50,000 bp, mutation frequency per locus >= 5')
+plt.title('4 allele test values for PSB loci (coverage >= 3) (n=5,000)\n mutation frequency per locus >= 1')
 plt.xlabel('4 allele test values')
 plt.ylabel('fraction of pairs (normalized)')
 #plt.yscale('log')
