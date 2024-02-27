@@ -66,8 +66,9 @@ plt.show()
 ###
 
 # Read in the SRB snp data
-data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2021_chr.csv', index_col=0)
-data = data.drop(index=('PB93'))    # PB93 is a hypermutator so get rid of it for this analysis
+#data = pd.read_csv('/home/ada/Desktop/Shraiman_lab/srb_data/srb_snp_data_2021_chr.csv', index_col=0)
+data = pd.read_csv('/home/ada/Desktop/PinkBerry_scripts_paper/data/srb/SNP_data/srb_snp_data_2024_chr_coverage_6_no_PB93.csv', index_col=0)
+#data = data.drop(index=('PB93'))    # PB93 is a hypermutator so get rid of it for this analysis
 
 # Index = names of bacterial samples
 data_index = data.index.values.tolist()
@@ -114,12 +115,12 @@ for i in contigs_list:
 # Plot the densities across the genome
 fig, axs = plt.subplots(2)
 fig.suptitle('SNP densities across the genome (SRB)')
-axs[0].plot(all_windows[0][500:800], list(all_densities[0].values())[500:800])
+axs[0].plot(all_windows[0][:1000], list(all_densities[0].values())[:1000])
 axs[0].set(ylabel='SNPs per kb')
 axs[0].title.set_text('Contig 0')
-#axs[1].plot(all_windows[contigs_list.index('67.0')][:1000], list(all_densities[contigs_list.index('67.0')].values())[:1000])
-#axs[1].set(ylabel='SNPs per kb')
-#axs[1].title.set_text('Contig 67')
+axs[1].plot(all_windows[contigs_list.index('67.0')][:1000], list(all_densities[contigs_list.index('67.0')].values())[:1000])
+axs[1].set(ylabel='SNPs per kb')
+axs[1].title.set_text('Contig 67')
 plt.xlabel('Location in the genome (Mb)')
 plt.show()
 
