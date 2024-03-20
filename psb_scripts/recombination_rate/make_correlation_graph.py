@@ -26,11 +26,15 @@ for s1i in range(0, len(data_index)):
 
         sigma = [s1+'_'+s2]
         for i in range(0, len(v1)):
-            if v1[i] == np.nan or v2[i] == np.nan:   # not enough info for calculations
+            
+            if v1[i] not in [0, 1] or v2[i] not in [0, 1]:   # not enough info for calculations
+                #print(str(v1[i]) + ' ' + str(v2[i]) + ' nan' )
                 sigma.append(np.nan)
             elif v1[i] == v2[i]:                     # both alleles are the same
+                #print(str(v1[i]) + ' ' + str(v2[i]) + ' same' )
                 sigma.append(0)
             else:
+                #print(str(v1[i]) + ' ' + str(v2[i]) + ' different' )
                 sigma.append(1)                      # the alleles are differen (a mutation and a WT)
 
         all_sigmas.append(sigma)
@@ -52,7 +56,7 @@ pos_averages = np.array(pos_averages)
 ds = sum(pos_averages)/float(len(pos_averages))
 ds_var = np.var(pos_averages)
 
-mcorr_out_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_PSB_data_2024_pipeline.csv'
+mcorr_out_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_PSB_data_2024_pipeline_ql_ds.csv'
 mcorr_out = open(mcorr_out_file, 'w')
 mcorr_out.write('# l: the distance between two genomic positions\n')
 mcorr_out.write('# m: the mean value of correlatio profile\n')
@@ -72,7 +76,7 @@ for i in range(0, len(data_positions)):
 
         if abs(int(pos1) - int(pos2)) < 600:
             dist = abs(int(pos1) - int(pos2))
-            pos1_v, pos2_v = np.array(sigma_df.loc[:, pos1]), np.array(sigma_df.loc[:, pos2])
+            pos1_v, pos2_v = list(sigma_df.loc[:, pos1]), list(sigma_df.loc[:, pos2])
 
             # Calculate probability of pos2 having 1 given pos1 has 1  
             # P(B|A) = (P and B) / P(A)
@@ -98,8 +102,12 @@ for i in range(0, len(data_positions)):
                     probabilities_per_distance[dist].append(p_11)
 
 
-out_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_PSB_data_2024.csv'
+out_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_PSB_data_2024_ql_ds.csv'
 out = open(out_file, 'w')
+
+data_out_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_PSB_raw_data_2024_ql_ds.csv'
+raw_out = open(data_out_file, 'w')
+raw_out.write('ds,' + str(ds) + '\n')
 
 # Average over all probabilities per distance (sort it as well)
 distances_sorted = list(probabilities_per_distance.keys())
@@ -109,16 +117,18 @@ distances, probabilities = [], []
 for k in distances_sorted:
     distances.append(k)
     v = probabilities_per_distance[k]
+    raw_out.write(str(k) + ',' + str(v).strip('[').strip(']') + '\n')
     q_l = sum(v)/len(v)
     probabilities.append(q_l / ds)
-    out.write(str(k) + ',' + "{:.5f}".format(sum(v)/len(v)) + '\n')
+    out.write(str(k) + ',' + "{:.5f}".format(q_l / ds) + '\n')
     np_v = np.array(v)
     var = np.var(np_v)
-    mcorr_out.write(str(k) + ',' + "{:.5f}".format(sum(v)/len(v)) + ',' + "{:.5f}".format(var) + ',' + str(len(v)) +',P2,all\n')
+    mcorr_out.write(str(k) + ',' + "{:.5f}".format(q_l / ds) + ',' + "{:.5f}".format(var) + ',' + str(len(v)) +',P2,all\n')
 
 
 out.close()
 mcorr_out.close()
+raw_out.close()
 
 plt.plot(distances, probabilities, 'o', alpha=0.8, mfc='none')
 plt.title('P(l) vs distance for all PSB loci')

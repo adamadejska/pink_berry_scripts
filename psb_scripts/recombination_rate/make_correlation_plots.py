@@ -6,10 +6,10 @@
 
 from lmfit import Parameters, Minimizer, minimize
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import math
 import numpy as np
 import pandas as pd
-import random
 
 
 def Power(a, b):
@@ -20,6 +20,17 @@ def Power(a, b):
 def const_r1(x, fBar, phiC, w):
     """calculate r1 assuming constant fragment size"""
     return np.where(x < fBar, w*phiC*x, w*phiC*fBar)
+
+
+def exp_r1(x, fBar, phiC, w):
+    """calculate r1 assuming exponetional decay of fragment size"""
+    return w*phiC*fBar*(1.0 - np.exp(-x/fBar))
+
+
+def geom_r1(x, fBar, phiC, w):
+    """calculate r1 assuming geom distribution"""
+    prob = 1.0/fBar
+    return w*phiC*fBar*(1.0 - np.power(1-prob, x))
 
 
 def calcP2(thetaS, r1, r2, ds, a):
@@ -53,10 +64,10 @@ def fcn2min(params, xvalues, yvalues, r1_func):
 def fit_model(xvalues, yvalues, d_sample, r1_func):
     """fitting correlation profile using lmfit"""
     params1 = Parameters()
-    params1.add('ds', value=d_sample, vary=False)
-    params1.add('thetaS', value=0.00001, min=0, max=d_sample)
-    params1.add('f', value=1000, min=3, max=300000)
-    params1.add('phiS', value=0.00005, min=0, max=1)
+    params1.add('ds', value=d_sample, vary=False)   # vary=False will prevent the value from changing in the fit
+    params1.add('thetaS', value=0.0009, min=0.0009, max=d_sample)
+    params1.add('f', value=1000, min=3, max=4000)
+    params1.add('phiS', value=0.00009, min=0.00009, max=1)
     params1.add('w', value=2.0/3.0, vary=False)
     params1.add('a', value=4.0/3.0, vary=False)
     params1.add('thetaP', expr='(ds*(1 + phiS*w*f + a*thetaS)-thetaS)/ \
@@ -70,8 +81,32 @@ def fit_model(xvalues, yvalues, d_sample, r1_func):
     return result
 
 
+def plot_fit(xvalues, yvalues, fitres):
+    """Fit all row data and do plotting for the full-recombination model"""
+    fig = plt.figure(tight_layout=False)
+
+    figsize = 4
+    fig.set_figheight(figsize)
+    fig.set_figwidth(figsize)
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], hspace=0)
+    ax1 = plt.subplot(gs[0, 0])
+    ax1.scatter(xvalues, yvalues, s=20, facecolors='none', edgecolors='k')
+    predictions = yvalues + fitres.residual
+    ax1.plot(xvalues, predictions, 'r')
+    ax1.set_ylabel(r'$P$')
+    if np.min(yvalues) != np.max(yvalues):
+        ax1.set_ylim([np.min(yvalues)*0.9, np.max(yvalues)*1.1])
+    ax1.locator_params(axis='x', nbins=5)
+    ax1.locator_params(axis='y', nbins=5)
+    plt.setp(ax1.get_xticklabels(), visible=True)
+    ax1.set_xlabel(r'$l$')
+    plt.title('P(l) vs distance for all PSB loci')
+
+    plt.show()
+
+
 # Read the data.
-data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_PSB_data_2024.csv'
+data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/data/mcorr_PSB_data_2024_ql_ds.csv'
 
 xvalues, yvalues = [], []
 
@@ -82,34 +117,26 @@ with open(data_file, 'r') as f:
         yvalues.append(float(y.strip()))
 
 xvalues = np.array(xvalues)
-yvalues = np.array(yvalues)
+yvalues = np.array(yvalues)/0.04182
 
-pl_results = []
-l_list = []
-for l in range(1,600):
-    ds = 0.5011   # calculated
-    thetaS = 1e-02
-    f = 300
-    phiS = 7e-03
-    w = 2.0/3.0
-    a = 4.0/3.0
-    thetaP = (ds*(1 + phiS*w*f + a*thetaS)-thetaS)/ ((1 - a*ds)*(phiS*w*f + a*thetaS)-(a*ds))
-    phiP = phiS*thetaP/thetaS
-    c = w*phiS*f/(1+w*phiS*f+thetaS*a)
-    dp = thetaP/(1+a*thetaP)
-    dc = thetaS/(1+a*thetaS)
-    c_0 = (1+2*thetaS*a) / (1 + 2*thetaS*a + phiS*w*(f+l))
-    c_1 = (2*phiS*w*l) / (1+2*thetaS*a + phiS*w*(f+l))
-    c_2 = (phiS*w*(f-l)) / (1 + 2*thetaS*a + phiS*w*(f+l))
-    d_2theta = (2*thetaS) / (1 + 2*thetaS*a)
-    qp_part1 = 2 * math.pow((thetaP / (1+thetaP*a)), 2)
-    qp_part2 = (1 + thetaP*a + phiP*w*l) / (1 + 2*thetaP*a + 2*phiP*w*l)
-    qp = qp_part1 * qp_part2 
-    pl = (c_0 * d_2theta*ds + c_1*ds*dp + c_2*qp) / ds
+d_sample = 0.04182
+r1_func = geom_r1
+result = fit_model(xvalues, yvalues, d_sample, r1_func)
+params = result.params.valuesdict()
+thetaS = result.params["thetaS"]
+phiS = result.params["phiS"]
+f = result.params["f"]
 
-    pl_results.append(pl)
-    l_list.append(l)
+print("fit_success", result.success)
+print("function_evals", result.nfev)
+print("data_points", result.ndata)
+print("variables", result.nvarys)
+print("message", result.message)
+print("thetaS (init)", thetaS.init_value)
+print("f (init)", f.init_value)
+print("phiS (init)", phiS.init_value)
+print("ds", "thetaS", "f", "phiS", "thetaP", "phiP", "c", "dp", "dc")
+print(params["ds"], params["thetaS"], params["f"], params["phiS"],params["thetaP"], params["phiP"], params["c"], params["dp"], params["dc"])
 
-plt.scatter(xvalues, yvalues, alpha=0.5)
-plt.plot(l_list, pl_results)
-plt.show()
+plot_fit(xvalues, yvalues, result)
+
