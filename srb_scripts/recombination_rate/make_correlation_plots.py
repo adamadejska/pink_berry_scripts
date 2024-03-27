@@ -81,7 +81,7 @@ def fit_model(xvalues, yvalues, d_sample, r1_func):
     return result
 
 
-def plot_fit(xvalues, yvalues, fitres):
+def plot_fit(xvalues, yvalues, fitres, title):
     """Fit all row data and do plotting for the full-recombination model"""
     fig = plt.figure(tight_layout=False)
 
@@ -100,14 +100,14 @@ def plot_fit(xvalues, yvalues, fitres):
     ax1.locator_params(axis='y', nbins=5)
     plt.setp(ax1.get_xticklabels(), visible=True)
     ax1.set_xlabel(r'$l$')
-    plt.title('P(l) vs distance for all SRB loci (coverage >= 3, no PB93)')
+    plt.title(title)
 
     plt.show()
 
 
 # Read the data.
-data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/mcorr_SRB_data_2024_ql_ds_cov_3.csv'
-
+#data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/data/mcorr_SRB_data_2024_ql_ds_cov_3.csv'
+data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/data/srb_clades/mcorr_SRB_data_2024_ql_ds_cov_3_F_clade.csv'
 xvalues, yvalues = [], []
 
 with open(data_file, 'r') as f:
@@ -119,7 +119,8 @@ with open(data_file, 'r') as f:
 xvalues = np.array(xvalues)
 yvalues = np.array(yvalues)
 
-d_sample = 0.05987
+d_sample = 0.25960
+title = 'P(l) vs distance for SRB (coverage >= 3)\n mixing layer'
 r1_func = const_r1
 result = fit_model(xvalues, yvalues, d_sample, r1_func)
 params = result.params.valuesdict()
@@ -134,5 +135,5 @@ print("phiS (init)", phiS.init_value)
 print("ds", "thetaS", "f", "phiS", "thetaP", "phiP", "c", "dp", "dc")
 print(params["ds"], params["thetaS"], params["f"], params["phiS"],params["thetaP"], params["phiP"], params["c"], params["dp"], params["dc"])
 
-plot_fit(xvalues, yvalues, result)
+plot_fit(xvalues, yvalues, result, title)
 
