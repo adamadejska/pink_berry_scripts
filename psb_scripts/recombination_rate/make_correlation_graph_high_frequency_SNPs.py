@@ -34,6 +34,10 @@ data_positions = data.columns.tolist()
 frequency = 5
 good_positions = find_pairs(data_positions, frequency, data)
 
+good_positions = [int(i) for i in good_positions]
+good_positions.sort()
+good_positions = [str(i) for i in good_positions]
+
 # Subset the data to only include high frequency positions
 data = data.loc[:, good_positions]
 data_index = data.index.values.tolist()
@@ -49,7 +53,8 @@ for s1i in range(0, len(data_index)):
 
 		sigma = [s1+'_'+s2]
 		for i in range(0, len(v1)):
-			if v1[i] == np.nan or v2[i] == np.nan:   # not enough info for calculations
+			if v1[i] not in [0, 1] or v2[i] not in [0, 1]:   # not enough info for calculations
+				#print(str(v1[i]) + ' ' + str(v2[i]) + ' nan' )
 				sigma.append(np.nan)
 			elif v1[i] == v2[i]:                     # both alleles are the same
 				sigma.append(0)
@@ -112,7 +117,7 @@ for i in range(0, len(data_positions)):
 					if pos1_v[k] == 1:
 						sum_1x_positions += 1
 
-			if total != 0 and sum_1x_positions != 0:
+			if total != 0:
 				p_11 = sum_11_positions/total
 
 				if dist not in probabilities_per_distance.keys():

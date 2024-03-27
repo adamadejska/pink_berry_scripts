@@ -100,13 +100,14 @@ def plot_fit(xvalues, yvalues, fitres):
     ax1.locator_params(axis='y', nbins=5)
     plt.setp(ax1.get_xticklabels(), visible=True)
     ax1.set_xlabel(r'$l$')
-    plt.title('P(l) vs distance for all PSB loci')
+    plt.title('P(l) vs distance for all PSB loci (E clade)')
 
     plt.show()
 
 
 # Read the data.
-data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/data/mcorr_PSB_data_2024_ql_ds.csv'
+#data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/data/mcorr_PSB_data_2024_ql_ds.csv'
+data_file = '/home/ada/Desktop/PinkBerry_scripts_paper/psb_scripts/recombination_rate/data/clades/mcorr_PSB_data_2024_ql_ds_E_clade.csv'
 
 xvalues, yvalues = [], []
 
@@ -117,9 +118,9 @@ with open(data_file, 'r') as f:
         yvalues.append(float(y.strip()))
 
 xvalues = np.array(xvalues)
-yvalues = np.array(yvalues)/0.04182
+yvalues = np.array(yvalues)
 
-d_sample = 0.04182
+d_sample = 0.19507
 r1_func = geom_r1
 result = fit_model(xvalues, yvalues, d_sample, r1_func)
 params = result.params.valuesdict()
